@@ -1,5 +1,5 @@
-/* غیرفعال کردن تقویم استاندارد */
-.datepickers-container {
+/* غیرفعال کردن تقویم استاندارد فقط وقتی تقویم شمسی فعال است */
+body.jalali-calendar-enabled .datepickers-container {
     display: none !important;
 }
 

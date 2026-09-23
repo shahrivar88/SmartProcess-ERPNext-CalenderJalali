@@ -4,4 +4,5 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
-jalali_shamsi_datepicker.patches.add_yyyy_mm_dd_date_format
+# (خالی — پچ پیشین که گزینه date_format مربوط به هسته را تغییر می‌داد حذف شد؛
+#  طبق قانون بدون تغییر Core هسته.)

@@ -6,17 +6,20 @@ app_publisher = "Ideenemium"
 app_description = "A best solution to change date and datetime fields to Shamsi(Jalali) Calendar."
 app_email = "ideenemium@gmail.com"
 app_license = "MIT"
+required_apps = ["frappe"]
 
-# jalali_shamsi_datepicker/hooks.py
 fixtures = [
-    {"doctype": "Custom Field"}
+    {"doctype": "Custom Field", "filters": [["name", "in", ["enable_shamsi_jalali_calendar"]]]}
 ]
+
+extend_bootinfo = ["jalali_shamsi_datepicker.boot.extend_bootinfo"]
 
 app_include_css = [
     "/assets/jalali_shamsi_datepicker/css/persian-datepicker.min.css",
+    "/assets/jalali_shamsi_datepicker/css/custom.css?v=2",
 ]
 app_include_js = [
     "/assets/jalali_shamsi_datepicker/js/persian-date.min.js",
     "/assets/jalali_shamsi_datepicker/js/persian-datepicker.min.js",
-    "/assets/jalali_shamsi_datepicker/js/base.js"
+    "/assets/jalali_shamsi_datepicker/js/topersian_date.js?v=3",
 ]

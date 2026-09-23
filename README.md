@@ -23,24 +23,21 @@
 1. این ریپازیتوری را به پروژه Frappe/ERPNext خود اضافه کنید:
 
 ```bash
-bench get-app https://github.com/Atshan/jalali_shamsi_datepicker
+bench get-app https://github.com/shahrivar88/jalali_shamsi_datepicker
 bench --site [نام سایت شما] install-app jalali_shamsi_datepicker
-````
-
-2. سرویس‌های Bench را ری‌استارت کنید:
-
-```bash
-bench build --app jalali_shamsi_datepicker
-bench migrate
-bench --site [نام سایت شما] migrate
-bench clear-cache
-bench restart
-bench start
 ```
 
-3. در **System Settings** گزینه‌ی `Enable Shamsi/Jalali Calendar` را فعال کنید و فرمت ذخیره‌سازی را روی `Persian (شمسی)` بگذارید.
+2. مایگریت و ری‌استارت:
 
-4. در پایین همین تنظیمات، فرمت نمایش تاریخ را طبق فرمت تاریخ شمسی روی yyyy/mm/ddd بگذارید.
+```bash
+bench --site [نام سایت شما] migrate
+bench --site [نام سایت شما] clear-cache
+bench restart
+```
+
+3. در **System Settings** گزینه‌ی `Enable Shamsi (Jalali) Calendar` را فعال کنید و صفحه مرورگر را یک بار رفرش کنید.
+
+فرمت تاریخ سیستم (`date_format`) نیازی به تغییر ندارد؛ هر فرمتی که انتخاب شده باشد پشتیبانی می‌شود.
 
 ---
 
@@ -54,23 +51,17 @@ bench start
 
 ## فایل‌های کلیدی
 
-* `base.js`
-  بررسی می‌کند که آیا شمسی فعال است یا خیر و در صورت فعال بودن، فایل‌های JS مربوط به تقویم را بارگذاری می‌کند.
+* `boot.py`
+  وضعیت فعال بودن تقویم شمسی را از طریق `extend_bootinfo` به مرورگر می‌فرستد؛ کاربران بدون دسترسی به System Settings هم تقویم را دارند.
 
 * `topersian_date.js`
-  منطق اصلی برای اتصال Persian Datepicker به فرم‌ها و همزمان نمایش تاریخ میلادی.
-
-* `togregorian_date.js`
-  تبدیل تاریخ شمسی انتخاب‌شده به میلادی برای ذخیره در دیتابیس ERPNext.
-
-* `in_words_cleanup.js`
-  (در صورت استفاده) برای پاکسازی نمایش حروفی اعداد یا اصلاح فرمت‌های متنی.
+  منطق اصلی برای اتصال Persian Datepicker به فیلدهای فرم جاری و نمایش تاریخ میلادی معادل. مقدار انتخاب‌شده با `frm.set_value` به صورت میلادی ثبت می‌شود.
 
 ---
 
 ## نکات مهم
 
-* برای اعمال تغییرات و فعال شدن کامل تقویم شمسی، ممکن است نیاز باشد فرم‌ها یا صفحه را **رفرش کنید**.
+* بعد از فعال یا غیرفعال کردن تقویم شمسی، صفحه مرورگر را یک بار **رفرش کنید**.
 * این اپلیکیشن تاریخ‌ها را **به صورت شمسی نمایش** می‌دهد، اما **همچنان داده‌ها در دیتابیس میلادی ذخیره** می‌شوند.
 * با این روش، ERPNext به صورت بومی همچنان از داده‌های میلادی استفاده می‌کند و قابلیت گزارش‌گیری یا محاسبات بدون مشکل باقی می‌ماند.
 
