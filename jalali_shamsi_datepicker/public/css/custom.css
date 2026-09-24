@@ -1,11 +1,4 @@
-/* غیرفعال کردن تقویم استاندارد فقط وقتی تقویم شمسی فعال است */
-body.jalali-calendar-enabled .datepickers-container {
-    display: none !important;
-}
-
-/* استایل معادل میلادی */
-.gregorian-date, .gregorian-datetime {
-    font-size: 12px;
-    color: #888;
-    margin-top: 5px;
+/* Keep the Persian picker above Frappe modals (Quick Entry, dialogs). */
+body.jalali-calendar-enabled .datepicker-container {
+    z-index: 1060;
 }

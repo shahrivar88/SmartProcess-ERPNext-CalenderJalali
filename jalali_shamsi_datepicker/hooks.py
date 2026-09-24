@@ -8,18 +8,27 @@ app_email = "ideenemium@gmail.com"
 app_license = "MIT"
 required_apps = ["frappe"]
 
+# Only this app's own Custom Field; never widen this filter.
 fixtures = [
-    {"doctype": "Custom Field", "filters": [["name", "in", ["enable_shamsi_jalali_calendar"]]]}
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            ["dt", "=", "System Settings"],
+            ["fieldname", "=", "custom_enable_shamsi_jalali_calendar"],
+        ],
+    }
 ]
 
 extend_bootinfo = ["jalali_shamsi_datepicker.boot.extend_bootinfo"]
+before_uninstall = "jalali_shamsi_datepicker.uninstall.before_uninstall"
 
 app_include_css = [
     "/assets/jalali_shamsi_datepicker/css/persian-datepicker.min.css",
-    "/assets/jalali_shamsi_datepicker/css/custom.css?v=2",
+    "/assets/jalali_shamsi_datepicker/css/custom.css?v=3",
 ]
 app_include_js = [
     "/assets/jalali_shamsi_datepicker/js/persian-date.min.js",
     "/assets/jalali_shamsi_datepicker/js/persian-datepicker.min.js",
-    "/assets/jalali_shamsi_datepicker/js/topersian_date.js?v=3",
+    "/assets/jalali_shamsi_datepicker/js/jalali_core.js?v=1",
+    "/assets/jalali_shamsi_datepicker/js/jalali_controls.js?v=2",
 ]
