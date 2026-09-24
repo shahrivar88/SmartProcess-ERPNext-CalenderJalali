@@ -199,14 +199,8 @@
 					$cont.css({ visibility: "visible" });
 				});
 				this.enable_time_keyboard(picker);
-				// Month/year navigation re-renders the grid; re-trim and re-center afterwards.
-				$cont
-					.find(".datepicker-navigator")
-					.off(".jalaliTrim")
-					.on("click.jalaliTrim", () => {
-						setTimeout(() => this.refresh_jalali_layout(), 0);
-						setTimeout(() => this.refresh_jalali_layout(), 50);
-					});
+				// Month/year navigation re-renders the grid; keep trim in sync afterwards.
+				this.bind_jalali_month_watch($cont);
 			}
 
 			bind_jalali_outside_close(picker) {
@@ -257,19 +251,103 @@
 				this.reposition_jalali_picker();
 			}
 
+			schedule_jalali_layout_refresh() {
+				const run = () => {
+					if (!this.jalali_picker) return;
+					this.refresh_jalali_layout();
+				};
+				// Library updates the day grid asynchronously; hit a few frames after nav.
+				run();
+				requestAnimationFrame(run);
+				[0, 30, 80, 160].forEach((ms) => setTimeout(run, ms));
+			}
+
+			// Unhide before nav so persian-datepicker can rewrite every week row
+			// (display:none rows can keep stale non-other-month cells after a 6-week month).
+			reveal_jalali_weeks($root) {
+				const $plot = ($root && $root.length ? $root : $(".datepicker-plot-area")).filter(":visible").last();
+				if (!$plot.length) return;
+				$plot.find(".table-days tr.jalali-empty-week").removeClass("jalali-empty-week");
+			}
+
+			bind_jalali_month_watch($cont) {
+				if (!$cont || !$cont.length) return;
+				const ns = ".jalaliTrim-" + (this.df.fieldname || "f") + "-" + (this.docname || "n");
+				this._jalali_trim_ns = ns;
+				// mousedown runs before the library mutates the grid.
+				$cont
+					.off(ns)
+					.on(
+						"mousedown" + ns,
+						".datepicker-navigator, .pwt-btn-next, .pwt-btn-prev, .pwt-btn-switch, .month-item, .year-item",
+						() => {
+							this.reveal_jalali_weeks($cont.find(".datepicker-plot-area"));
+						}
+					)
+					.on(
+						"click" + ns,
+						".datepicker-navigator, .pwt-btn-next, .pwt-btn-prev, .pwt-btn-switch, .month-item, .year-item",
+						() => this.schedule_jalali_layout_refresh()
+					);
+
+				const table = $cont.find(".table-days").get(0);
+				if (this._jalali_trim_obs) {
+					this._jalali_trim_obs.disconnect();
+					this._jalali_trim_obs = null;
+				}
+				if (!table || typeof MutationObserver === "undefined") return;
+				let scheduled = false;
+				this._jalali_trim_obs = new MutationObserver((mutations) => {
+					if (scheduled || this._jalali_trimming || !this.jalali_picker) return;
+					const relevant = mutations.some((m) => {
+						if (m.type === "characterData" || m.type === "childList") return true;
+						if (m.type === "attributes" && m.attributeName === "class") {
+							// Ignore our own jalali-empty-week toggles on <tr>.
+							return !(m.target && m.target.tagName === "TR");
+						}
+						return false;
+					});
+					if (!relevant) return;
+					scheduled = true;
+					requestAnimationFrame(() => {
+						scheduled = false;
+						this.refresh_jalali_layout();
+					});
+				});
+				this._jalali_trim_obs.observe(table, {
+					childList: true,
+					subtree: true,
+					characterData: true,
+					attributes: true,
+					attributeFilter: ["class"],
+				});
+			}
+
 			// Hide trailing week rows that contain only other-month days (typically row 6).
 			trim_empty_weeks() {
 				const $plot = $(".datepicker-plot-area").filter(":visible").last();
 				if (!$plot.length) return;
-				$plot.find(".table-days tr.jalali-empty-week").removeClass("jalali-empty-week");
-				const $rows = $plot.find(".table-days tr");
-				for (let i = $rows.length - 1; i >= 0; i--) {
-					const $row = $rows.eq(i);
-					const $days = $row.find("td span");
-					if (!$days.length) continue;
-					const onlyOther = $days.toArray().every((el) => el.classList.contains("other-month"));
-					if (onlyOther) $row.addClass("jalali-empty-week");
-					else break;
+				this._jalali_trimming = true;
+				try {
+					// Drop any library inline heights left over from a taller (6-week) month.
+					$plot
+						.add($plot.find(".datepicker-day-view, .datepicker-grid-view, .month-grid-box, .table-days"))
+						.each(function () {
+							this.style.removeProperty("height");
+							this.style.removeProperty("min-height");
+						});
+					$plot.find(".table-days tr.jalali-empty-week").removeClass("jalali-empty-week");
+					const $rows = $plot.find(".table-days tr");
+					for (let i = $rows.length - 1; i >= 0; i--) {
+						const $row = $rows.eq(i);
+						const $days = $row.find("td span");
+						if (!$days.length) continue;
+						const onlyOther = $days.toArray().every((el) => el.classList.contains("other-month"));
+						if (onlyOther) $row.addClass("jalali-empty-week");
+						else break;
+					}
+				} finally {
+					this._jalali_trimming = false;
 				}
 			}
 
@@ -455,6 +533,14 @@
 					if (this._jalali_scrollers) this._jalali_scrollers.off(this._jalali_pos_ns);
 				}
 				if (this._jalali_outside_ns) $(document).off(this._jalali_outside_ns);
+				if (this._jalali_trim_ns) {
+					$(".datepicker-container").off(this._jalali_trim_ns);
+					this._jalali_trim_ns = null;
+				}
+				if (this._jalali_trim_obs) {
+					this._jalali_trim_obs.disconnect();
+					this._jalali_trim_obs = null;
+				}
 				this._jalali_open_value = null;
 				if (picker._jalali_destroyed) return;
 				picker._jalali_destroyed = true;
