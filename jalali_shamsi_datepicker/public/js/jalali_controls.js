@@ -12,6 +12,8 @@
 //     when this.datepicker is not set.
 //   - ControlDatetime.format_for_input returns "<user date> <user time>" in the user time zone.
 //   - frappe.form.formatters.Date / Datetime return the same user-format strings.
+//   - ControlData.set_input(value) calls set_disp_area(value) with the model value, and
+//     disp_area is the ".control-value" element (absent when only_input).
 (function () {
 	const ns = (window.jalali_shamsi_datepicker = window.jalali_shamsi_datepicker || {});
 	const core = ns.core;
@@ -60,6 +62,25 @@
 
 			format_for_input(value) {
 				return userToJalaliText(super.format_for_input(value));
+			}
+
+			set_disp_area(value) {
+				super.set_disp_area(value);
+				this.show_stored_value(value);
+			}
+
+			// Shows the raw model value (what is saved to the database) under the field.
+			// Skipped for only_input controls (grid cells, list/report filters).
+			show_stored_value(value) {
+				if (this.only_input || !this.disp_area) return;
+				if (!this.$stored_value) {
+					this.$stored_value = $('<div class="jalali-stored-value"><bdi dir="ltr"></bdi></div>')
+						.attr("title", __("Value saved to the database"))
+						.insertAfter(this.disp_area);
+				}
+				const raw = value === undefined || value === null ? "" : String(value);
+				this.$stored_value.find("bdi").text(raw);
+				this.$stored_value.toggleClass("hide", !raw);
 			}
 
 			parse(value) {

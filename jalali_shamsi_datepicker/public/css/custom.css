@@ -2,3 +2,178 @@
 body.jalali-calendar-enabled .datepicker-container {
     z-index: 1060;
 }
+
+/* Persian picker themed with Frappe design tokens (site font, colours, dark mode). */
+body.jalali-calendar-enabled .datepicker-plot-area {
+    width: 264px;
+    padding: 8px;
+    font: 13px/1.4 var(--font-stack, inherit);
+    color: var(--text-color, #1f272e);
+    background: var(--fg-color, #fff);
+    border: 1px solid var(--border-color, #ededed);
+    border-radius: var(--border-radius-lg, 12px);
+    box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.12));
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area * {
+    font-family: var(--font-stack, inherit);
+    color: var(--text-color, #1f272e);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator .pwt-btn-prev,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator .pwt-btn-next,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator .pwt-btn-switch {
+    float: none;
+    margin: 0;
+    height: 30px;
+    line-height: 30px;
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator .pwt-btn-switch {
+    flex: 1;
+    width: auto;
+    font-weight: 600;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator .pwt-btn-prev,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator .pwt-btn-next {
+    width: 30px;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator [class*="pwt-btn"]:hover,
+body.jalali-calendar-enabled .datepicker-plot-area .toolbox [class*="pwt-btn"]:hover,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view .up-btn:hover,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view .down-btn:hover {
+    background: var(--subtle-fg, #f3f3f3);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .month-grid-box {
+    min-height: 0;
+    margin: 4px 0;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .month-grid-box .header .header-row-cell {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted, #7c7c7c);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days td {
+    height: 32px;
+    padding: 1px;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days td span,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-year-view .year-item,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-month-view .month-item {
+    height: 30px;
+    line-height: 30px;
+    font-size: 13px;
+    background: transparent;
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-year-view .year-item,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-month-view .month-item {
+    height: 38px;
+    line-height: 38px;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days td span:hover,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-year-view .year-item:hover,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-month-view .month-item:hover {
+    background: var(--subtle-fg, #f3f3f3);
+    color: var(--text-color, #1f272e);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days td span.other-month {
+    color: var(--text-light, #b0b0b0);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days td.today span {
+    background: transparent;
+    color: var(--primary, #2490ef);
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px var(--primary, #2490ef);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days td.selected span,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-year-view .year-item.selected,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-month-view .month-item.selected {
+    background: var(--primary, #2490ef);
+    color: var(--white, #fff);
+    text-shadow: none;
+    box-shadow: none;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days td.disabled span,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-year-view .year-item-disable,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-month-view .month-item-disable {
+    background: transparent;
+    color: var(--text-light, #c0c0c0);
+    cursor: default;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view {
+    margin-top: 4px;
+    padding: 6px 0 0;
+    background: transparent;
+    border-top: 1px solid var(--border-color, #ededed);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view > .time-segment,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view .up-btn,
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view .down-btn {
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view .divider {
+    font: 600 13px var(--font-stack, inherit);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .toolbox {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-color, #ededed);
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .toolbox [class*="pwt-btn"] {
+    float: none;
+    flex: 1;
+    height: 28px;
+    line-height: 28px;
+    font-size: 12px;
+    color: var(--primary, #2490ef);
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+}
+
+/* Keep "YYYY/MM/DD HH:mm:ss" in reading order on RTL pages. */
+html[dir="rtl"] body.jalali-calendar-enabled .frappe-control[data-fieldtype="Date"] input,
+html[dir="rtl"] body.jalali-calendar-enabled .frappe-control[data-fieldtype="Datetime"] input,
+html[dir="rtl"] body.jalali-calendar-enabled .frappe-control[data-fieldtype="Date"] .control-value,
+html[dir="rtl"] body.jalali-calendar-enabled .frappe-control[data-fieldtype="Datetime"] .control-value {
+    direction: ltr;
+    text-align: right;
+}
+
+/* Raw model value (exactly what is sent to the server) shown under Date/Datetime fields. */
+body.jalali-calendar-enabled .jalali-stored-value {
+    margin-top: 2px;
+    font-size: var(--text-xs, 11px);
+    color: var(--text-muted, #7c7c7c);
+    font-variant-numeric: tabular-nums;
+}
