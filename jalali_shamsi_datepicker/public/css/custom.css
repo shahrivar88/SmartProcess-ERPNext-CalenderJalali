@@ -1,16 +1,19 @@
-/* Keep the Persian picker above form content but below the desk navbar. */
+/* Keep the Persian picker above form fields but under sticky page chrome. */
 body.jalali-calendar-enabled .datepicker-container {
-    z-index: 1010;
+    z-index: 5;
 }
 
 /*
  * Compact Persian picker themed with Frappe tokens.
  * Day cells use the same rounded-square hover frame as selection.
  * Fridays are red text only (no disc). Empty trailing weeks are hidden in JS.
+ * .datepicker-day-view ships with min-height:200px — override so 5-week months shrink.
  */
 body.jalali-calendar-enabled .datepicker-plot-area {
     width: 228px;
     min-width: 228px;
+    min-height: 0 !important;
+    height: auto !important;
     padding: 6px 6px 5px;
     font: 12px/1.35 var(--font-stack, inherit);
     color: var(--text-color, #1f272e);
@@ -18,6 +21,8 @@ body.jalali-calendar-enabled .datepicker-plot-area {
     border: 1px solid var(--border-color, #e8e8e8);
     border-radius: 6px;
     box-shadow: var(--shadow-md, 0 6px 18px rgba(15, 23, 42, 0.1));
+    overflow: hidden;
+    display: flow-root;
 }
 
 body.jalali-calendar-enabled .datepicker-plot-area * {
@@ -29,6 +34,8 @@ body.jalali-calendar-enabled .datepicker-plot-area .datepicker-navigator {
     display: flex;
     align-items: center;
     gap: 2px;
+    float: none;
+    width: 100%;
     margin-bottom: 3px;
 }
 
@@ -63,13 +70,33 @@ body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view .down-b
     background: var(--subtle-fg, #f3f3f3);
 }
 
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-grid-view {
+    float: none;
+    width: 100%;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden;
+    display: flow-root;
+}
+
+body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view {
+    float: none !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+}
+
 body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .month-grid-box {
+    float: none !important;
+    width: 100% !important;
     min-height: 0 !important;
     margin: 0;
     height: auto;
 }
 
 body.jalali-calendar-enabled .datepicker-plot-area .datepicker-day-view .table-days {
+    float: none !important;
+    width: 100% !important;
     min-height: 0;
 }
 
@@ -250,6 +277,8 @@ body.jalali-calendar-enabled .datepicker-plot-area .datepicker-time-view .divide
 body.jalali-calendar-enabled .datepicker-plot-area .toolbox {
     display: flex;
     gap: 3px;
+    float: none;
+    width: 100%;
     margin-top: 6px;
     padding-top: 5px;
     border-top: 1px solid var(--border-color, #e8e8e8);

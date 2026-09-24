@@ -190,12 +190,17 @@
 					this.$input.val(this.format_for_input(this.get_model_value()));
 				}
 				picker.show();
+				// Hide until trim+center finish so the library's first auto-position does not jump.
+				const $cont = $(".datepicker-container").filter(":visible").last();
+				$cont.css({ visibility: "hidden" });
 				this.refresh_jalali_layout();
+				requestAnimationFrame(() => {
+					this.refresh_jalali_layout();
+					$cont.css({ visibility: "visible" });
+				});
 				this.enable_time_keyboard(picker);
 				// Month/year navigation re-renders the grid; re-trim and re-center afterwards.
-				$(".datepicker-container")
-					.filter(":visible")
-					.last()
+				$cont
 					.find(".datepicker-navigator")
 					.off(".jalaliTrim")
 					.on("click.jalaliTrim", () => {
@@ -276,22 +281,26 @@
 				// Relative plot so the container gets a real width/height for centering.
 				$plot.css({ position: "relative", left: "0", top: "0" });
 				// Fixed to the viewport so the sheet tracks the field while the desk scrolls.
-				// z-index stays below the desk navbar so content tucks under menus when scrolling.
-				$cont.css({ position: "fixed", margin: 0, zIndex: 1010 });
+				// z-index 5 stays under sticky .page-head (z-index 6) so menus cover it on scroll.
+				$cont.css({ position: "fixed", margin: 0, zIndex: 5 });
 				const rect = this.$input.get(0).getBoundingClientRect();
 				const height = $plot.outerHeight() || 0;
 				const width = $plot.outerWidth() || 228;
-				const navbar = document.querySelector(".navbar, .main-section .navbar, header.navbar");
-				const navbarBottom = navbar ? navbar.getBoundingClientRect().bottom : 0;
+				const pageHead = document.querySelector(".page-head");
+				const chromeBottom = pageHead ? pageHead.getBoundingClientRect().bottom : 0;
+				// Field scrolled under the page head — close instead of drawing over menus.
+				if (rect.bottom <= chromeBottom + 2) {
+					if (this.jalali_picker) this.jalali_picker.hide();
+					return;
+				}
 				let top = rect.bottom + 4;
 				const fitsBelow = rect.bottom + height + 8 <= window.innerHeight;
-				const fitsAbove = rect.top - height - 4 >= Math.max(8, navbarBottom + 4);
+				const fitsAbove = rect.top - height - 4 >= Math.max(8, chromeBottom + 4);
 				if (!fitsBelow && fitsAbove) {
 					top = rect.top - height - 4;
 				}
-				// Never draw over the sticky navbar.
-				if (top < navbarBottom + 4) top = navbarBottom + 4;
-				// Center on the field (middle-to-middle), only nudge if it would leave the viewport.
+				if (top < chromeBottom + 4) top = chromeBottom + 4;
+				// Center on the field (middle-to-middle).
 				let left = rect.left + (rect.width - width) / 2;
 				if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8;
 				if (left < 8) left = 8;
