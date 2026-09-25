@@ -1,1 +1,2 @@
-# frappe==15.111.1
+# No external runtime dependencies: the app runs inside a Frappe bench, which
+# provides `frappe`. This file only exists so setuptools can build the package.

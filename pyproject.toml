@@ -1,6 +1,6 @@
 [project]
 name = "jalali_shamsi_datepicker"
-version = "1.5.2"
+version = "1.6.0"
 description = "A best solution to change date and datetime fields to Shamsi(Jalali) Calendar."
 authors = [
     { name = "Ideenemium", email = "ideenemium@gmail.com" }
@@ -13,8 +13,8 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 
 [project.urls]
-Homepage = "https://github.com/shahrivar88/jalali_shamsi_datepicker"
-Repository = "https://github.com/shahrivar88/jalali_shamsi_datepicker"
+Homepage = "https://github.com/shahrivar88/SmartProcess-ERPNext-CalenderJalali"
+Repository = "https://github.com/shahrivar88/SmartProcess-ERPNext-CalenderJalali"
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]

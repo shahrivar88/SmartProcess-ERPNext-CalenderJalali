@@ -143,6 +143,56 @@
 			.trim();
 	}
 
+	// Escapes a user-supplied string before it is interpolated into an HTML context
+	// (e.g. the frappe.msgprint message for a rejected Jalali date).
+	function escapeHtml(value) {
+		return String(value == null ? "" : value).replace(/[&<>"']/g, (c) => {
+			switch (c) {
+				case "&":
+					return "&amp;";
+				case "<":
+					return "&lt;";
+				case ">":
+					return "&gt;";
+				case '"':
+					return "&quot;";
+				default:
+					return "&#39;";
+			}
+		});
+	}
+
+	// Local-midnight unix timestamp for a "YYYY-MM-DD" Gregorian string, or null when
+	// not parseable / not a real calendar day (never rolls 2026-02-30 over to March).
+	function gregorianDateStringToTimestamp(isoDate) {
+		const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate || "").trim());
+		if (!m) return null;
+		const gy = Number(m[1]);
+		const gm = Number(m[2]);
+		const gd = Number(m[3]);
+		const d = new Date(gy, gm - 1, gd, 0, 0, 0, 0);
+		if (d.getFullYear() !== gy || d.getMonth() !== gm - 1 || d.getDate() !== gd) return null;
+		return d.getTime();
+	}
+
+	// "YYYY-MM-DD" for the local calendar day of a unix timestamp (used to compare the
+	// picker's day-cell timestamps against df.disabled_dates without timezone drift).
+	function timestampToGregorianDateString(ms) {
+		const d = new Date(ms);
+		return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+	}
+
+	// Set of "YYYY-MM-DD" days to disable in the picker, or null when there are none.
+	function disabledDatesSet(list) {
+		if (!Array.isArray(list) || !list.length) return null;
+		const set = new Set();
+		for (const item of list) {
+			const iso = String(item == null ? "" : item).trim();
+			if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) set.add(iso);
+		}
+		return set.size ? set : null;
+	}
+
 	// "YYYY-MM-DD" (Gregorian) -> "YYYY/MM/DD" (Jalali); "" for anything unparsable.
 	function gregorianToJalaliString(isoDate) {
 		const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate || "").trim());
@@ -185,13 +235,48 @@
 		return { valid: true, gregorian: jalaliToGregorianString(jy, jm, jd), time };
 	}
 
+	// Typing a Gregorian date in ISO-ish form (any digit system) should keep working like
+	// Frappe's own parse; e.g. "2026/09/24" or Persian-digit "۲۰۲۶/۰۹/۲۴ ۱۴:۳۰". Returns
+	// "YYYY-MM-DD[ HH:mm:ss]" (zero-padded) or null when unparsable/unverifiable.
+	function normalizeGregorianInput(value) {
+		if (value == null) return null;
+		const text = normalizeDigits(value);
+		const m = /^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:[\sT]+(.+))?$/.exec(text);
+		if (!m) return null;
+		const gy = Number(m[1]);
+		// Years in the Jalali band are handled by parseJalaliInput; Gregorian years are
+		// unmistakable in the 1900-2100 range.
+		if (gy < 1900 || gy > 2100) return null;
+		const gm = Number(m[2]);
+		const gd = Number(m[3]);
+		const check = d2g(g2d(gy, gm, gd));
+		if (check.gy !== gy || check.gm !== gm || check.gd !== gd) return null;
+		let iso = gy + "-" + pad(gm) + "-" + pad(gd);
+		const time = m[4] ? m[4].trim() : "";
+		if (time) {
+			const tp = time.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(.*)$/);
+			if (tp) {
+				const h = Math.min(Number(tp[1]) || 0, 23);
+				const mi = Math.min(Number(tp[2]) || 0, 59);
+				const s = Math.min(Number(tp[3]) || 0, 59);
+				iso += " " + pad(h) + ":" + pad(mi) + ":" + pad(s) + (tp[4] || "");
+			}
+		}
+		return iso;
+	}
+
 	return {
 		normalizeDigits,
+		escapeHtml,
+		gregorianDateStringToTimestamp,
+		timestampToGregorianDateString,
+		disabledDatesSet,
 		isLeapJalaliYear,
 		jalaliMonthLength,
 		isValidJalaliDate,
 		gregorianToJalaliString,
 		jalaliToGregorianString,
 		parseJalaliInput,
+		normalizeGregorianInput,
 	};
 });

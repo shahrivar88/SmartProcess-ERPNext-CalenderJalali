@@ -111,6 +111,16 @@
 				if (isTime) return super.parse(value);
 				const parsed = core.parseJalaliInput(value);
 				if (!parsed) {
+					// Not Jalali-shaped: keep Gregorian input (with any digit system) working
+					// exactly like Frappe's own parse, and leave everything else untouched.
+					const iso = core.normalizeGregorianInput(value);
+					if (iso) {
+						const [datePart, timePart] = iso.split(" ");
+						const userText =
+							frappe.datetime.str_to_user(datePart, false, true) +
+							(!isDatetime || !timePart ? "" : " " + timePart);
+						return super.parse(userText);
+					}
 					return super.parse(value);
 				}
 				if (!parsed.valid) {
@@ -118,7 +128,9 @@
 					frappe.msgprint({
 						title: __("Invalid Date"),
 						indicator: "red",
-						message: __("{0} is not a valid Jalali date.", [parsed.input]),
+						// parsed.input is user text and can contain markup (e.g. in the time part);
+						// msgprint appends message as HTML, so escape it before interpolating.
+						message: __("{0} is not a valid Jalali date.", [core.escapeHtml(parsed.input)]),
 					});
 					setTimeout(() => this.set_formatted_input(current), 0);
 					return current;
@@ -128,6 +140,30 @@
 					userText += " " + parsed.time;
 				}
 				return super.parse(userText);
+			}
+
+			// options for persian-datepicker that mirror Frappe's own df.min_date /
+			// df.max_date / df.disabled_dates. The boundaries are derived from the
+			// Gregorian model (database stays Gregorian); the picker renders Jalali.
+			// Selections are still re-validated against the core converter before commit.
+			build_jalali_date_options() {
+				const df = this.df || {};
+				const opts = {};
+				if (df.min_date) {
+					const ts = core.gregorianDateStringToTimestamp(df.min_date);
+					if (ts != null) opts.minDate = ts;
+				}
+				if (df.max_date) {
+					const ts = core.gregorianDateStringToTimestamp(df.max_date);
+					if (ts != null) opts.maxDate = ts;
+				}
+				const disabled = core.disabledDatesSet(df.disabled_dates);
+				if (disabled) {
+					opts.checkDate = function (ts) {
+						return !disabled.has(core.timestampToGregorianDateString(ts));
+					};
+				}
+				return opts;
 			}
 
 			show_jalali_picker() {
@@ -169,6 +205,7 @@
 					},
 					onSelect: () => this.apply_jalali_selection(),
 					onHide: () => this.destroy_jalali_picker(picker),
+					...this.build_jalali_date_options(),
 				});
 				this.jalali_picker = picker;
 				// Datetime / Time pickers stay open until an outside click; close them when
@@ -178,6 +215,7 @@
 				frappe.router.once("change", close);
 				this.bind_jalali_positioning(picker);
 				this.bind_jalali_outside_close(picker);
+				this.bind_jalali_keys(picker);
 
 				if (isTime) {
 					this.sync_time_picker(picker);
@@ -224,6 +262,32 @@
 						});
 				}, 0);
 				this._jalali_outside_ns = ns;
+			}
+
+			bind_jalali_keys(picker) {
+				const ns = ".jalaliKeys-" + (this.df.fieldname || "f") + "-" + (this.docname || "n");
+				this._jalali_keys_ns = ns;
+				this.$input.off(ns).on("keydown" + ns, (e) => {
+					if (this.jalali_picker !== picker) return;
+					if (e.key === "Escape") {
+						// Cancel: restore the value the field had when the picker opened.
+						e.preventDefault();
+						e.stopPropagation();
+						this.$input.val(
+							this._jalali_open_value != null
+								? this._jalali_open_value
+								: this.format_for_input(this.get_model_value())
+						);
+						picker.hide();
+					} else if (e.key === "Tab") {
+						// Commit as typed and let Frappe move focus naturally.
+						picker.hide();
+					} else if (e.key === "Enter") {
+						e.preventDefault();
+						this.$input.val(core.normalizeDigits(this.$input.val())).trigger("change");
+						picker.hide();
+					}
+				});
 			}
 
 			bind_jalali_positioning(picker) {
@@ -359,8 +423,17 @@
 				// Relative plot so the container gets a real width/height for centering.
 				$plot.css({ position: "relative", left: "0", top: "0" });
 				// Fixed to the viewport so the sheet tracks the field while the desk scrolls.
-				// z-index 5 stays under sticky .page-head (z-index 6) so menus cover it on scroll.
-				$cont.css({ position: "fixed", margin: 0, zIndex: 5 });
+				// Outside dialogs keep a low z-index so the sticky .page-head (z-index 6)
+				// still covers the sheet when the field scrolls under it; inside a modal or
+				// Quick Entry the modal backdrop (z-index ~1040/1050) would hide the sheet,
+				// so raise it above the modal element itself.
+				let zIndex = 5;
+				const $modal = this.$input.closest(".modal");
+				if ($modal.length) {
+					const modalZ = parseInt(window.getComputedStyle($modal.get(0)).zIndex, 10);
+					zIndex = (Number.isFinite(modalZ) ? modalZ : 1050) + 10;
+				}
+				$cont.css({ position: "fixed", margin: 0, zIndex });
 				const rect = this.$input.get(0).getBoundingClientRect();
 				const height = $plot.outerHeight() || 0;
 				const width = $plot.outerWidth() || 228;
@@ -413,7 +486,11 @@
 					picker.hide();
 					return;
 				}
-				const model = isDatetime ? frappe.datetime.now_datetime() : frappe.datetime.now_date();
+				// now_datetime() is already in the *user* time zone, and format_for_input()
+				// also converts system -> user, so converting to the system zone here avoids
+				// applying the user offset twice (Frappe stores datetimes in the system zone).
+				const systemNow = frappe.datetime.convert_to_system_tz(frappe.datetime.now_datetime());
+				const model = isDatetime ? systemNow : systemNow.slice(0, 10);
 				const text = this.format_for_input(model);
 				this.$input.val(text).trigger("change");
 				picker.hide();
@@ -533,6 +610,10 @@
 					if (this._jalali_scrollers) this._jalali_scrollers.off(this._jalali_pos_ns);
 				}
 				if (this._jalali_outside_ns) $(document).off(this._jalali_outside_ns);
+				if (this._jalali_keys_ns) {
+					this.$input.off(this._jalali_keys_ns);
+					this._jalali_keys_ns = null;
+				}
 				if (this._jalali_trim_ns) {
 					$(".datepicker-container").off(this._jalali_trim_ns);
 					this._jalali_trim_ns = null;

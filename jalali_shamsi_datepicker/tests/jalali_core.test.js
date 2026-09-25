@@ -65,6 +65,57 @@ test("Invalid Gregorian input produces no Jalali text", () => {
 	assert.equal(core.gregorianToJalaliString(""), "");
 });
 
+test("escapeHtml neutralizes markup in user-supplied input", () => {
+	assert.equal(
+		core.escapeHtml("1405/04/31 <img src=x onerror=alert(1)>"),
+		"1405/04/31 &lt;img src=x onerror=alert(1)&gt;"
+	);
+	assert.equal(core.escapeHtml('a"b\'c&d'), "a&quot;b&#39;c&amp;d");
+	assert.equal(core.escapeHtml("plain 1405/04/31"), "plain 1405/04/31");
+	assert.equal(core.escapeHtml(null), "");
+	assert.equal(core.escapeHtml(undefined), "");
+	assert.equal(core.escapeHtml(123), "123");
+});
+
+test("gregorianDateStringToTimestamp is local midnight and never rolls over", () => {
+	const d = new Date(core.gregorianDateStringToTimestamp("2026-09-24"));
+	assert.equal(d.getFullYear(), 2026);
+	assert.equal(d.getMonth(), 8);
+	assert.equal(d.getDate(), 24);
+	assert.equal(d.getHours(), 0);
+	for (const bad of ["2026-02-30", "2026-13-01", "2026-00-10", "not a date", "", null]) {
+		assert.equal(core.gregorianDateStringToTimestamp(bad), null, String(bad));
+	}
+});
+
+test("timestampToGregorianDateString uses the local calendar day", () => {
+	assert.equal(core.timestampToGregorianDateString(new Date(2026, 8, 24, 23, 59, 59).getTime()), "2026-09-24");
+	assert.equal(core.timestampToGregorianDateString(new Date(2026, 8, 25, 0, 0, 0).getTime()), "2026-09-25");
+});
+
+test("disabledDatesSet keeps only strict YYYY-MM-DD entries", () => {
+	const set = core.disabledDatesSet(["2026-09-25", "garbage", "2026-9-5", null, "2026-09-30"]);
+	assert.ok(set instanceof Set);
+	assert.deepEqual([...set].sort(), ["2026-09-25", "2026-09-30"]);
+	assert.equal(core.disabledDatesSet([]), null);
+	assert.equal(core.disabledDatesSet(["bad"]), null);
+	assert.equal(core.disabledDatesSet(null), null);
+	assert.equal(core.disabledDatesSet("2026-09-25"), null);
+});
+
+test("normalizeGregorianInput normalizes ISO-ish Gregorian with any digit system", () => {
+	assert.equal(core.normalizeGregorianInput("2026/09/24"), "2026-09-24");
+	assert.equal(core.normalizeGregorianInput("۲۰۲۶/۰۹/۲۴"), "2026-09-24");
+	assert.equal(core.normalizeGregorianInput("2026-9-4"), "2026-09-04");
+	assert.equal(core.normalizeGregorianInput("2026.9.4"), "2026-09-04");
+	assert.equal(core.normalizeGregorianInput("2026-09-24 14:30:05"), "2026-09-24 14:30:05");
+	// Jalali years stay owned by parseJalaliInput, not normalised as Gregorian.
+	assert.equal(core.normalizeGregorianInput("١٤٠٥/٠٧/٠٢"), null);
+	for (const bad of ["2026-02-30", "2026-13-01", "1899-12-31", "2101-01-01", "not a date", "", null, undefined]) {
+		assert.equal(core.normalizeGregorianInput(bad), null, String(bad));
+	}
+});
+
 test("Round trip is exact for every day 1990-2040", () => {
 	const day = new Date(Date.UTC(1990, 0, 1));
 	const end = Date.UTC(2040, 11, 31);
